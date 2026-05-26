@@ -1,0 +1,35 @@
+---
+import type { DevChapter } from "../data/terms";
+import StudyTimer from "./StudyTimer.astro";
+
+interface Props { chapters: DevChapter[]; totalTerms: number; }
+const { chapters, totalTerms } = Astro.props;
+const pad = (n: number) => String(n).padStart(2, "0");
+---
+
+<header class="toprail">
+  <div class="tr-row">
+    <div class="tr-mark"><span class="tr-orb"></span>DRIVIA · DEV LAB v1</div>
+    <div class="tr-stats">
+      <StudyTimer />
+      <button class="tr-pill-action audio-stop" data-act="audio-stop" id="g-audio-stop" style="display:none">■ Stop audio</button>
+      <button class="tr-pill-action" data-act="quiz-open" id="g-quiz-btn">🎯 FLASHCARDS</button>
+      <div class="tr-stat"><span class="lbl">Day streak</span><span class="val warn" id="g-day-streak">0🔥</span></div>
+      <div class="tr-stat"><span class="lbl">Mastered</span><span class="val" id="g-mastered">0 / {totalTerms}</span></div>
+    </div>
+  </div>
+  <nav class="tr-pills" id="pills" aria-label="Chapter navigation">
+    {chapters.map((c) => (
+      <a class="tr-pill" id={`pill-${c.index}`} href={`#ch-${c.index}`}>
+        <span class="n">{pad(c.index)}</span>
+        {c.title.replace(/&/, "·")}
+        <span class="ct">{c.terms.length}</span>
+      </a>
+    ))}
+  </nav>
+</header>
+
+<style>
+.tr-pill .ct{margin-left:6px;font:600 9px/1 var(--mono);color:var(--dim);background:rgba(255,255,255,.04);padding:2px 5px;border-radius:2px}
+.tr-pill.mastered .ct{color:var(--accent-good);background:rgba(4,248,39,.08)}
+</style>

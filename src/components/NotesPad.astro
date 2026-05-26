@@ -1,0 +1,16 @@
+---
+interface Props { index: number; slug: string; }
+const { index, slug } = Astro.props;
+---
+
+<div class="sec">
+  <div class="sec-lbl">Your notes (saved locally)</div>
+  <div class="notes" data-idx={index} data-slug={slug}>
+    <textarea
+      id={`notes-${index}`}
+      data-slug={slug}
+      placeholder="Capture your own intuition here… auto-saves as you type."
+    ></textarea>
+    <div class="save" id={`save-${index}`}>saved</div>
+  </div>
+</div>

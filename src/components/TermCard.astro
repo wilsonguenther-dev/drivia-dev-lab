@@ -1,0 +1,90 @@
+---
+import SpeakBack from "./SpeakBack.astro";
+import type { DevTerm } from "../data/terms";
+
+interface Props { term: DevTerm; index: number; total: number; }
+const { term: t, index, total } = Astro.props;
+const pad = (n: number) => String(n).padStart(2, "0");
+---
+
+<section class="card" id={`t${index}`} data-idx={index} data-slug={t.slug} data-title={t.title} data-chapter={t.chapterIndex}>
+  <div class="t-num">Term {pad(index + 1)} · {index + 1} of {total} · Ch. {t.chapterIndex} {t.chapterTitle}</div>
+  <h2 class="t-title">{t.title}</h2>
+
+  <div class="ctrls">
+    <button class="btn primary" data-act="hear" data-idx={index}>▶ Hear it</button>
+    <button class="btn" data-act="mark" data-idx={index}>✓ Mark mastered</button>
+    <div class="status" id={`st-${index}`}>ready</div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-lbl">Plain English</div>
+    <p class="prose plain">{t.plain}</p>
+  </div>
+
+  {t.analogy && (
+    <div class="sec">
+      <div class="sec-lbl">Analogy</div>
+      <p class="prose analogy">{t.analogy}</p>
+    </div>
+  )}
+
+  {t.example && (
+    <div class="sec">
+      <div class="sec-lbl">Example</div>
+      <p class="prose example">{t.example}</p>
+    </div>
+  )}
+
+  {t.whenToUse && (
+    <div class="sec">
+      <div class="sec-lbl">When to use it</div>
+      <p class="prose when">{t.whenToUse}</p>
+    </div>
+  )}
+
+  {t.watchOut && (
+    <div class="sec watch">
+      <div class="sec-lbl">Watch out for</div>
+      <p class="prose watch-body">{t.watchOut}</p>
+    </div>
+  )}
+
+  {t.rule && (
+    <div class="sec rule">
+      <div class="sec-lbl">Rule</div>
+      <p class="prose rule-body"><code>{t.rule}</code></p>
+    </div>
+  )}
+
+  <SpeakBack
+    index={index}
+    targets={[
+      { label: "Term", text: t.title },
+      { label: "Plain English", text: t.plain },
+      ...(t.analogy ? [{ label: "Analogy", text: t.analogy }] : []),
+    ]}
+  />
+</section>
+
+<style>
+.card{padding:28px 30px;background:var(--panel);border:1px solid var(--line);margin:20px 0;position:relative}
+.card.mastered{border-color:color-mix(in srgb,var(--accent-good) 50%,transparent)}
+.card.mastered::before{content:"✓ MASTERED";position:absolute;top:14px;right:18px;color:var(--accent-good);font:700 9px/1 var(--mono);letter-spacing:.18em}
+.t-num{font:600 10px/1 var(--mono);letter-spacing:.18em;color:var(--dim);text-transform:uppercase;margin-bottom:8px}
+.t-title{font:700 28px/1.1 var(--type);letter-spacing:-.005em;color:var(--ink);margin:0 0 18px}
+.ctrls{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.btn{background:transparent;color:var(--muted);border:1px solid var(--line);font:700 11px/1 var(--mono);letter-spacing:.08em;padding:8px 14px;cursor:pointer;text-transform:uppercase;transition:all .12s ease}
+.btn.primary{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 50%,transparent)}
+.btn:hover{color:var(--accent);border-color:var(--accent);background:rgba(0,212,255,.06)}
+.status{font:500 11px/1 var(--mono);color:var(--dim);margin-left:auto}
+.sec{margin:14px 0;padding:12px 14px;border-left:2px solid var(--line);background:rgba(255,255,255,.02)}
+.sec.watch{border-left-color:var(--accent-warn);background:rgba(255,184,0,.04)}
+.sec.rule{border-left-color:var(--accent);background:rgba(0,212,255,.04)}
+.sec-lbl{font:700 10px/1 var(--type);letter-spacing:.22em;color:var(--accent);text-transform:uppercase;margin-bottom:6px}
+.sec.watch .sec-lbl{color:var(--accent-warn)}
+.sec.rule .sec-lbl{color:var(--accent)}
+.prose{font:500 15px/1.6 var(--body);color:var(--ink);margin:0}
+.prose.example{font-family:var(--mono);font-size:13px;color:#dde2ff}
+.prose.rule-body code{font-family:var(--mono);color:var(--accent);font-size:14px}
+</style>

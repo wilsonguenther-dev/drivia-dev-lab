@@ -1,0 +1,56 @@
+---
+import Layout from "../components/Layout.astro";
+import TopRail from "../components/TopRail.astro";
+import TermCard from "../components/TermCard.astro";
+import KeyboardHelp from "../components/KeyboardHelp.astro";
+import QuizPanel from "../components/QuizPanel.astro";
+import { CHAPTERS, TERMS } from "../data/terms";
+---
+
+<Layout title="Drivia Dev Lab v1 · The CTO Vocabulary Guide, interactive">
+  <TopRail chapters={CHAPTERS} totalTerms={TERMS.length} />
+
+  <section class="hero">
+    <div class="eye">Wilson's CTO Vocabulary Guide · v1 · Astro build</div>
+    <h1>Every developer word, in <em>plain English.</em></h1>
+    <p class="sub">
+      {TERMS.length} terms across {CHAPTERS.length} chapters. Plain English,
+      analogy, Drivia example, when to use it, what to watch out for. Say each
+      one back to lock it in.
+    </p>
+  </section>
+
+  <main>
+    {CHAPTERS.map((c) => (
+      <>
+        <h2 class="chapter-hdr" id={`ch-${c.index}`}>
+          <span class="ch-num">Chapter {String(c.index).padStart(2, "0")}</span>
+          <span class="ch-title">{c.title}</span>
+          <span class="ch-blurb">{c.blurb}</span>
+        </h2>
+        {c.terms.map((t) => {
+          const globalIdx = TERMS.findIndex((x) => x.slug === t.slug);
+          return <TermCard term={t} index={globalIdx} total={TERMS.length} />;
+        })}
+      </>
+    ))}
+  </main>
+
+  <footer class="site-foot">
+    Drivia Dev Lab v1 · Astro 5 · Kokori on localhost:3000 · {TERMS.length} terms parsed from the CTO Vocabulary Guide PDF
+  </footer>
+
+  <KeyboardHelp slot="overlays" />
+  <QuizPanel slot="overlays" />
+</Layout>
+
+<script>
+  import "../scripts/main.ts";
+</script>
+
+<style>
+.chapter-hdr{display:flex;flex-wrap:wrap;align-items:baseline;gap:16px;margin:60px 0 8px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.ch-num{font:700 11px/1 var(--mono);letter-spacing:.22em;color:var(--accent);text-transform:uppercase}
+.ch-title{font:700 32px/1.1 var(--type);letter-spacing:-.01em;color:var(--ink);margin:0}
+.ch-blurb{flex-basis:100%;font:500 14px/1.5 var(--body);color:var(--muted);margin-top:4px}
+</style>

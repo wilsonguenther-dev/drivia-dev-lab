@@ -1,0 +1,109 @@
+---
+import Layout from "../components/Layout.astro";
+import { TERMS, CHAPTERS } from "../data/terms";
+
+const totals = {
+  terms: TERMS.length,
+  chapters: CHAPTERS.length,
+  missingAnalogy: TERMS.filter((t) => !t.analogy).length,
+  missingExample: TERMS.filter((t) => !t.example).length,
+  missingWhen:    TERMS.filter((t) => !t.whenToUse).length,
+  missingWatch:   TERMS.filter((t) => !t.watchOut).length,
+  missingPlain:   TERMS.filter((t) => !t.plain || t.plain.length < 10).length,
+};
+const buildOK = totals.missingPlain === 0;
+---
+
+<Layout title="Dev Lab · Drift Audit">
+  <main class="audit">
+    <h1>Dev Lab · Drift audit</h1>
+    <p class="lead">Every check that has to pass for the lab to be considered shipped.</p>
+
+    <section class="block">
+      <h2>1 · Build-time data audit</h2>
+      <div class={`badge ${buildOK ? "ok" : "bad"}`}>{buildOK ? "PASS" : "FAIL"}</div>
+      <table>
+        <tbody>
+          <tr><td>Chapters</td><td><b>{totals.chapters}</b></td></tr>
+          <tr><td>Terms</td><td><b>{totals.terms}</b></td></tr>
+          <tr><td>Missing Plain English</td><td class={totals.missingPlain ? "bad" : "ok"}>{totals.missingPlain}</td></tr>
+          <tr><td>Missing analogy</td><td>{totals.missingAnalogy}</td></tr>
+          <tr><td>Missing example</td><td>{totals.missingExample}</td></tr>
+          <tr><td>Missing when-to-use</td><td>{totals.missingWhen}</td></tr>
+          <tr><td>Missing watch-out</td><td>{totals.missingWatch}</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="block">
+      <h2>2 · Runtime checks</h2>
+      <ul class="checks">
+        <li id="chk-kokori">Kokori TTS on :3000 · <em>checking…</em></li>
+        <li id="chk-cache-schema">Cache schema version · <em>checking…</em></li>
+        <li id="chk-idb">IndexedDB available · <em>checking…</em></li>
+        <li id="chk-sr">SpeechRecognition supported · <em>checking…</em></li>
+        <li id="chk-counts">Mastery / streak / study totals · <em>checking…</em></li>
+      </ul>
+    </section>
+
+    <section class="block">
+      <h2>3 · Reset</h2>
+      <button id="btn-clear-audio" class="btn">Clear cached audio</button>
+      <button id="btn-clear-all" class="btn bad">Clear ALL Dev Lab state</button>
+    </section>
+  </main>
+
+  <script>
+    import { blobClearAll, kvGet, __schema } from "../lib/cache";
+    import { getStreak } from "../lib/mastery";
+
+    function set(id: string, ok: boolean, text: string): void {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.innerHTML = el.textContent!.split("·")[0] + "· <em class=\"" + (ok ? "ok" : "bad") + "\">" + text + "</em>";
+    }
+    fetch("http://localhost:3000/generate", { method: "OPTIONS" })
+      .then(() => set("chk-kokori", true, "reachable"))
+      .catch(() => set("chk-kokori", false, "OFFLINE — start /Applications/Kokori.app"));
+    set("chk-cache-schema", true, `v${__schema.SCHEMA_VERSION} · ns ${__schema.NS}`);
+    set("chk-idb", typeof indexedDB !== "undefined", typeof indexedDB !== "undefined" ? "available" : "MISSING");
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    set("chk-sr", !!SR, SR ? "supported" : "NOT supported (try Chrome/Safari)");
+    const s = getStreak();
+    const study = kvGet<{ byDay: Record<string, number>; lifetime: number }>("study.sessions", { byDay: {}, lifetime: 0 });
+    set("chk-counts", true, `streak ${s.count} (longest ${s.longest}) · lifetime ${Math.round(study.lifetime / 60)} min`);
+    document.getElementById("btn-clear-audio")?.addEventListener("click", async () => {
+      await blobClearAll();
+      alert("Audio cache cleared.");
+    });
+    document.getElementById("btn-clear-all")?.addEventListener("click", async () => {
+      if (!confirm("Wipe all Dev Lab state?")) return;
+      await blobClearAll();
+      Object.keys(localStorage).filter((k) => k.startsWith("dlab.") || k.startsWith("drivia.dev.lab")).forEach((k) => localStorage.removeItem(k));
+      alert("Cleared. Reloading.");
+      location.reload();
+    });
+  </script>
+</Layout>
+
+<style>
+.audit{max-width:980px;margin:60px auto;padding:0 24px;color:var(--ink);font:500 14px/1.6 var(--body)}
+.audit h1{font:700 32px/1.1 var(--type);margin:0 0 8px}
+.audit .lead{color:var(--muted);margin:0 0 32px}
+.block{margin:36px 0;padding:20px;background:var(--panel);border:1px solid var(--line)}
+.block h2{font:700 14px/1 var(--type);letter-spacing:.12em;text-transform:uppercase;margin:0 0 14px;color:var(--accent)}
+.badge{display:inline-block;padding:4px 10px;font:700 10px/1 var(--mono);letter-spacing:.18em;border:1px solid var(--line);margin-bottom:12px}
+.badge.ok{color:var(--accent-good);border-color:var(--accent-good)}
+.badge.bad{color:var(--accent-bad);border-color:var(--accent-bad)}
+table{width:100%;border-collapse:collapse;font:500 13px/1.5 var(--mono)}
+td{padding:6px 8px;border-bottom:1px solid var(--line)}
+td.bad{color:var(--accent-bad)}
+td.ok{color:var(--accent-good)}
+.checks{list-style:none;padding:0;margin:0;font:500 13px/1.8 var(--mono)}
+.checks em{font-style:normal;color:var(--muted)}
+.checks em.ok{color:var(--accent-good)}
+.checks em.bad{color:var(--accent-bad)}
+.btn{background:transparent;color:var(--muted);border:1px solid var(--line);font:600 11px/1 var(--mono);padding:9px 14px;cursor:pointer;margin-right:8px;text-transform:uppercase;letter-spacing:.08em}
+.btn:hover{color:var(--accent);border-color:var(--accent)}
+.btn.bad:hover{color:var(--accent-bad);border-color:var(--accent-bad)}
+</style>
